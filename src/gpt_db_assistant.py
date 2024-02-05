@@ -3,6 +3,7 @@ import openai
 
 import pyodbc, struct
 import sqlvalidator
+import streamlit as st
 
 class GptDbAssistant():
 
@@ -195,12 +196,10 @@ class GptDbAssistant():
                 print('Query resulted in an error. \n')
                 print(f'Error message: {query_result}')
                 query = self.create_query_from_question_if_error(query, query_result)
-                print(f'Query: \n {query} \n')
                 error, query_result = self.execute_query(query)
                 n += 1
         
             if n==self.tries:
-                print(f"Tried to execute a valid query {str(tries)}x but with no success.")
                 continue_workflow=0
     
         return error, query_result
@@ -216,7 +215,6 @@ class GptDbAssistant():
             if error==0:
                 answer = self.result_answers_the_question(query, query_result)
                 short_answer = answer.split(' ')[0]
-                print(answer + '\n')
                 
             n+=1
     
@@ -227,22 +225,28 @@ class GptDbAssistant():
         self.get_database_info()
         
         query = self.create_query_from_question()
-        print(f'Query: \n {query} \n')
         error, query_result = self.execute_query(query)
+
+        st.write(query)
     
         error, query_result = self.fix_query(query, error, query_result)
-    
+        st.write(query_result)
+
         if error==0:
             if_answers_the_question = self.result_answers_the_question(query, query_result)
             short_if_answers_the_question = if_answers_the_question.split(' ')[0]
-            print(if_answers_the_question + '\n')
-    
+
+            st.write(if_answers_the_question)
+
             if 'Yes' in short_if_answers_the_question:
                 answer = self.final_answer(query, query_result)
-                print(answer)
+                return answer
             else:
                 answer, short_answer = self.try_another_query(query, answer)
                 if 'Yes' in short_answer:
-                    print(answer)
+                    return answer
                 else:
-                    print("Couldn't find an answer to the question.")
+                    answer = "Couldn't find an answer to the question."
+                    return answer
+
+        
