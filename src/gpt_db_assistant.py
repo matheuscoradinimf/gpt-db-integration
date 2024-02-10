@@ -2,7 +2,6 @@ import os
 import openai
 
 import pyodbc, struct
-import sqlvalidator
 import streamlit as st
 
 class GptDbAssistant():
@@ -14,7 +13,7 @@ class GptDbAssistant():
         self.password = 'password123!'
         self.driver= '{SQL Server}'
         self.model = "gpt-3.5-turbo"
-        self.client = client = openai.OpenAI(api_key='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')
+        self.client = openai.OpenAI(api_key='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')
         self.database_info = ''
         self.question = ''
         self.question = question
@@ -136,7 +135,7 @@ class GptDbAssistant():
 
     def create_query_from_question_if_doesnt_answer(self,query, answer):
     
-        response = client.chat.completions.create(
+        response = self.client.chat.completions.create(
         messages=[
             {
                 "role": "system",
@@ -184,27 +183,37 @@ class GptDbAssistant():
     
         return message
 
-    def fix_query(self, query, error, query_result):
-    
-        continue_workflow=1
+    def fix_query(self, query, error, query_result, expander):
         
         if error==0:
-            print("Query executed. But can the result answer the initial question? \n")
+            continue_workflow=1
+            expander.write('- Query result:')
+            expander.write(query_result)
         else:
             n=0
             while (error==1) and (n<self.tries):
-                print('Query resulted in an error. \n')
-                print(f'Error message: {query_result}')
+                expander.write('- Query resulted in an error.')
+                expander.write('- Error message:')
+                expander.write(query_result)
+                expander.write('- Generating new query...')
                 query = self.create_query_from_question_if_error(query, query_result)
                 error, query_result = self.execute_query(query)
+                expander.write('- Query:')
+                expander.write(query)
+                expander.write('- Query result:')
+                expander.write(query_result)
+
                 n += 1
         
             if n==self.tries:
                 continue_workflow=0
+                expander.write('- Tried too many times to create a query that does not result in an error.')
+            else:
+                continue_workflow=1
     
-        return error, query_result
+        return error, query_result, continue_workflow
 
-    def try_another_query(query, answer):
+    def try_another_query(self, query, answer):
     
         n=0
         
@@ -222,21 +231,24 @@ class GptDbAssistant():
 
     def answer_the_question(self):
 
+
         self.get_database_info()
         
         query = self.create_query_from_question()
         error, query_result = self.execute_query(query)
 
-        st.write(query)
+        expander = st.expander("Log")
+        expander.write('- Query:')
+        expander.write(query)
     
-        error, query_result = self.fix_query(query, error, query_result)
-        st.write(query_result)
+        error, query_result, continue_workflow = self.fix_query(query, error, query_result, expander)
 
-        if error==0:
+        if continue_workflow==1:
             if_answers_the_question = self.result_answers_the_question(query, query_result)
             short_if_answers_the_question = if_answers_the_question.split(' ')[0]
-
-            st.write(if_answers_the_question)
+            
+            expander.write("- Query executed. But can the result answer the initial question?")
+            expander.write(if_answers_the_question)
 
             if 'Yes' in short_if_answers_the_question:
                 answer = self.final_answer(query, query_result)
@@ -246,7 +258,14 @@ class GptDbAssistant():
                 if 'Yes' in short_answer:
                     return answer
                 else:
-                    answer = "Couldn't find an answer to the question."
+                    expander.write('- Tried too many times to create a query that answers the question.')
+                    answer = "Couldn't find an answer. Please try another question."
                     return answer
+                
+        else:
+            answer = "Couldn't find an answer. Please try another question."
+            return answer
+        
+        
 
         
