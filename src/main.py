@@ -8,7 +8,7 @@ from gpt_db_assistant import GptDbAssistant
 
 
 # Set up the title of the Streamlit app
-st.title('🤖 GPT <-> AdventureWorks 📊')
+st.title('🤖 GPT <-> Azure Database 📊')
 
 # Create a text input for the user to input a question
 question = st.text_input("Please input your question for GPT:")

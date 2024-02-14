@@ -35,7 +35,6 @@ class GptDbAssistant():
                     row_list = []
                     
                     while row:
-                        #row_text = str(row[0]) + " " + str(row[1])
                         row_text = str(row)
                         row_list.append(row_text)
                         row = cursor.fetchone()
@@ -50,6 +49,9 @@ class GptDbAssistant():
 
 
     def get_database_info(self):
+        """
+        GPT receives the question and the information from the database tables.
+        """
 
         error, message = self.execute_query("""SELECT 
                     t.TABLE_SCHEMA,
