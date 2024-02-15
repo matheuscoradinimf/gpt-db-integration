@@ -1,1 +1,1 @@
-![plot](./images/workflow.png)
+![plot](./images/workflow2.png)
