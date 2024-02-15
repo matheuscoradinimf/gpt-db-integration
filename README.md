@@ -31,6 +31,6 @@ The process flow of the integration is detailed in the workflow diagram included
 1. Set up an Azure SQL Database with the necessary data.
 2. Obtain an API key from OpenAI for accessing ChatGPT.
 3. Clone this repository to your local machine.
-4. Update the config.ini file
+4. Update the `src/config.ini` file
 5. Install the dependencies listed in `requirements.txt`.
 6. streamlit run src/main.py
