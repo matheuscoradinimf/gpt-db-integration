@@ -1,9 +1,4 @@
-import os
-import openai
-
-import pyodbc, struct
 import streamlit as st
-
 from gpt_db_assistant import GptDbAssistant
 
 
@@ -16,7 +11,13 @@ question = st.text_input("Please input your question for GPT:")
 # Check if there is a question input
 if question and len(question)>=1:
     # Instance the GptDbAssistant with the question
-    assistant = GptDbAssistant(question)
+    assistant = GptDbAssistant(server='adventureworksgpt.database.windows.net', # Your server here
+                               driver = '{SQL Server}', # Your driver here
+                               database='adventureWorks', # Your database name here
+                               username='user', # Your SQL Server user here
+                               password='password123!', # Your password here
+                               api_key='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', # Your OpenAI api key here
+                               question=question)
     
     # Create an empty placeholder
     status_placeholder = st.empty()

@@ -1,49 +1,54 @@
-import os
 import openai
 
-import pyodbc, struct
+import pyodbc
 import streamlit as st
 
 class GptDbAssistant():
 
-    def __init__(self, question):
-        self.server = 'adventureworksgpt.database.windows.net'
-        self.database = 'adventureWorks'
-        self.username = 'user'
-        self.password = 'password123!'
-        self.driver= '{SQL Server}'
+    def __init__(self, driver, server, database, username, password, api_key, question):
+        self.server = server
+        self.database = database
+        self.username = username
+        self.password = password
+        self.driver= driver
         self.model = "gpt-3.5-turbo"
-        self.client = openai.OpenAI(api_key='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')
+        self.client = openai.OpenAI(api_key=api_key)
         self.database_info = ''
-        self.question = ''
         self.question = question
         self.tries = 3
 
     
     def execute_query(self, text):
+        """
+        The query is executed in the database
+        """
             
         conn_string = f'Driver={self.driver};Server=tcp:{self.server},1433;Database={self.database};Uid={self.username};Pwd={self.password};Encrypt=yes;TrustServerCertificate=no;Connection Timeout=30;'
         error = 0
         message = ""
-    
-        with pyodbc.connect(conn_string) as conn:
-            try:
-                with conn.cursor() as cursor:
-                    cursor.execute(text)
-                    row = cursor.fetchone()
-                    
-                    row_list = []
-                    
-                    while row:
-                        row_text = str(row)
-                        row_list.append(row_text)
+        n = 0
+
+        while n<self.tries:
+
+            with pyodbc.connect(conn_string) as conn:
+                try:
+                    with conn.cursor() as cursor:
+                        cursor.execute(text)
                         row = cursor.fetchone()
-        
-                    message = " | ".join(row_list)
-                    
-            except pyodbc.Error as e:
-                error = 1
-                message = str(e).split('[SQL Server]')[-1]
+                        
+                        row_list = []
+                        
+                        while row:
+                            row_text = str(row)
+                            row_list.append(row_text)
+                            row = cursor.fetchone()
+            
+                        message = " | ".join(row_list)
+                        break
+                except pyodbc.Error as e:
+                    error = 1
+                    message = str(e).split('[SQL Server]')[-1]
+                    n+=1
       
         return error, message
 
@@ -72,6 +77,9 @@ class GptDbAssistant():
         return message
 
     def create_query_from_question(self):
+        """
+        GPT returns a query that can help answer the question
+        """
 
         response = self.client.chat.completions.create(
         messages=[
@@ -95,6 +103,9 @@ class GptDbAssistant():
 
 
     def create_query_from_question_if_error(self, query, error):
+        """
+        Asks GPT to generate a new query, stalling that the previous one resulted in an error
+        """
         response = self.client.chat.completions.create(
         messages=[
             {
@@ -116,6 +127,9 @@ class GptDbAssistant():
         return one_line_query
 
     def result_answers_the_question(self, query, result):
+        """
+        Submits the query result to GPT and inquires if the response addresses the user's question
+        """
         response = self.client.chat.completions.create(
         messages=[
             {
@@ -136,6 +150,9 @@ class GptDbAssistant():
         return message
 
     def create_query_from_question_if_doesnt_answer(self,query, answer):
+        """
+        Provides the response to the GPT and requests to generate a new query (only if query does not answer the user's question)
+        """
     
         response = self.client.chat.completions.create(
         messages=[
@@ -166,6 +183,9 @@ class GptDbAssistant():
         return one_line_query
 
     def final_answer(self, query, result):
+        """
+        GPT returns the final answer to the user
+        """
         response = self.client.chat.completions.create(
         messages=[
             {
@@ -186,6 +206,9 @@ class GptDbAssistant():
         return message
 
     def fix_query(self, query, error, query_result, expander):
+        """
+        Asks the GPT to generate a new query, stating that the previous one resulted in an error
+        """
         
         if error==0:
             continue_workflow=1
@@ -232,7 +255,9 @@ class GptDbAssistant():
         return answer, short_answer
 
     def answer_the_question(self):
-
+        """
+        Workflow execution
+        """
 
         self.get_database_info()
         
