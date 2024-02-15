@@ -1,34 +1,52 @@
+import os
 import streamlit as st
+import configparser
 from gpt_db_assistant import GptDbAssistant
 
+# Function to read the config file
+def read_config():
+    config = configparser.ConfigParser()
+    # Construct the absolute path to the config.ini file
+    dir_path = os.path.dirname(os.path.realpath(__file__))
+    config_path = os.path.join(dir_path, 'config.ini')
+    config.read(config_path)
+    return config
 
-# Set up the title of the Streamlit app
-st.title('🤖 GPT <-> Azure Database 📊')
+# Function to create an instance of GptDbAssistant
+def create_assistant(question, config):
+    return GptDbAssistant(server=config['database']['server'],
+                          driver=config['database']['driver'],
+                          database=config['database']['database'],
+                          username=config['database']['username'],
+                          password=config['database']['password'],
+                          api_key=config['openai']['api_key'],
+                          question=question)
 
-# Create a text input for the user to input a question
-question = st.text_input("Please input your question for GPT:")
-
-# Check if there is a question input
-if question and len(question)>=1:
-    # Instance the GptDbAssistant with the question
-    assistant = GptDbAssistant(server='adventureworksgpt.database.windows.net', # Your server here
-                               driver = '{SQL Server}', # Your driver here
-                               database='adventureWorks', # Your database name here
-                               username='user', # Your SQL Server user here
-                               password='password123!', # Your password here
-                               api_key='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', # Your OpenAI api key here
-                               question=question)
-    
-    # Create an empty placeholder
+# Function to get the answer to the user's question
+def get_answer(assistant):
     status_placeholder = st.empty()
     status_placeholder.write('GPT received your question, please wait a moment...')
-
-    # Get the answer to the question
     answer = assistant.answer_the_question()
+    status_placeholder.empty()  # Clear the placeholder
+    return answer
 
-    # Update the placeholder with the answer
-    status_placeholder.write('')  # Clear the placeholder
-    
-    # Display the question and answer
-    st.write("**Question**: ", question)
-    st.write("**Answer**:", answer)
+# Main function to run the Streamlit app
+def main():
+    # Set up the title of the Streamlit app
+    st.title('🤖 GPT <-> Azure Database 📊')
+
+    # Create a text input for the user to input a question
+    question = st.text_input("Please input your question for GPT:")
+
+    # Check if there is a question input
+    if question:
+        config = read_config()
+        assistant = create_assistant(question, config)
+        answer = get_answer(assistant)
+        
+        # Display the question and answer
+        st.write("**Question**: ", question)
+        st.write("**Answer**:", answer)
+
+if __name__ == "__main__":
+    main()
