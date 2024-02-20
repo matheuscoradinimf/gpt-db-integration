@@ -4,7 +4,9 @@
 This repository hosts a proof of concept for integrating OpenAI's ChatGPT with an Azure SQL Database to facilitate answering questions using data within the database. The integration aims to provide a seamless natural language querying interface.
 
 ## Demo
-https://github.com/matheuscoradinimf/gpt-db-integration/assets/111534102/3ab19648-3c7a-44af-92bc-f6a718ff0db6
+https://github.com/matheuscoradinimf/gpt-db-integration/assets/111534102/a55bda75-1975-4388-adfd-96a2c557da17
+
+
 
 
 
