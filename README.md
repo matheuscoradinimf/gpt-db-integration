@@ -3,6 +3,11 @@
 ## Overview
 This repository hosts a proof of concept for integrating OpenAI's ChatGPT with an Azure SQL Database to facilitate answering questions using data within the database. The integration aims to provide a seamless natural language querying interface.
 
+## Demo
+https://github.com/matheuscoradinimf/gpt-db-integration/assets/111534102/3ab19648-3c7a-44af-92bc-f6a718ff0db6
+
+
+
 ## Security and Credentials
 As part of our commitment to security best practices, the server credentials and API key used during the development of this POC have been permanently deleted and are no longer available. You should create your SQL Database and have your own Open AI api key.
 
@@ -34,3 +39,4 @@ The process flow of the integration is detailed in the workflow diagram included
 4. Update the `src/config.ini` file
 5. Install the dependencies listed in `requirements.txt`.
 6. streamlit run src/main.py
+
