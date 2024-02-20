@@ -85,7 +85,7 @@ class GptDbAssistant():
         messages=[
             {
                 "role": "system",
-                "content": "You will be provided with business questions about data in a database and your role is to return an SQL SERVER query that can answer that question. First I will provide you with the Schema, Table name and columns of each table of the database. Each table is separated with a | : " + self.database_info
+                "content": "You are an assistant that answers sql queries, your answer must be only the query text. You will be provided with business questions about data in a database and your role is to return an SQL SERVER query that can answer that question. First I will provide you with the Schema, Table name and columns of each table of the database. Each table is separated with a | : " + self.database_info
             },
             {
                 "role": "user",
@@ -238,19 +238,28 @@ class GptDbAssistant():
     
         return error, query_result, continue_workflow
 
-    def try_another_query(self, query, answer):
+    def try_another_query(self, query, if_answers_the_question, expander):
     
         n=0
+        short_answer='No'
         
         while short_answer=='No' and n<self.tries:
-            query = self.create_query_from_question_if_doesnt_answer(query, answer)
-            error, query_result = self.fix_query(query, error, query_result)
+            query = self.create_query_from_question_if_doesnt_answer(query, if_answers_the_question)
+            error, query_result = self.execute_query(query)
+            expander.write('- Query:')
+            expander.write(query)
+            error, query_result, _ = self.fix_query(query, error, query_result, expander)
             
             if error==0:
                 answer = self.result_answers_the_question(query, query_result)
+                expander.write("- Query executed. But can the result answer the initial question?")
+                expander.write(answer)
                 short_answer = answer.split(' ')[0]
-                
+                            
             n+=1
+
+        if 'Yes' in short_answer:
+            answer = self.final_answer(query, query_result)
     
         return answer, short_answer
 
@@ -281,7 +290,7 @@ class GptDbAssistant():
                 answer = self.final_answer(query, query_result)
                 return answer
             else:
-                answer, short_answer = self.try_another_query(query, answer)
+                answer, short_answer = self.try_another_query(query, if_answers_the_question, expander)
                 if 'Yes' in short_answer:
                     return answer
                 else:
